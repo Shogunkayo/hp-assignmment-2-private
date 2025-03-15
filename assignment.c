@@ -3,7 +3,7 @@
 #include <omp.h>
 #include <stdlib.h>
 
-#define NUM_PROCS 4
+#define NUM_PROCS 2
 #define CACHE_SIZE 4
 #define MEM_SIZE 16
 #define MSG_BUFFER_SIZE 256
@@ -13,18 +13,20 @@ typedef unsigned char byte;
 
 typedef enum { MODIFIED, EXCLUSIVE, SHARED, INVALID } cacheLineState;
 
-// In addition to cache line states, each directory entry also has a state associated
-// with it
-// EM ( exclusive or modified ) : main memory does not know when a cache has read a 
-//      block, then writes a block causing it to transition from state E to M. 
-//      All that memory knows is that it is in only one node.
-// S ( shared ) : cache line is in multiple nodes
-// U ( unowned ) : not in any cache
+// In addition to cache line states, each directory entry also has a state
+// EM ( exclusive or modified ) : memory block is in only one cache.
+//                  When a memory block in a cache is written to, it would have
+//                  resulted in cache hit and transition from EXCLUSIVE to MODIFIED.
+//                  Main memory / directory has no way of knowing of this transition.
+//                  Hence, this state only cares that the memory block is in a single
+//                  cache, and not whether its in EXCLUSIVE or MODIFIED.
+// S ( shared )     : memory block is in multiple caches
+// U ( unowned )    : memory block is not in any cache
 typedef enum { EM, S, U } directoryEntryState;
 
 typedef enum { 
-    READ_REQUEST, 
-    WRITE_REQUEST, 
+    READ_REQUEST,       // requesting node sends to home node on a read miss 
+    WRITE_REQUEST,      // requesting node sends to home node on a write miss 
     REPLY_RD,           // home node replies with data to requestor for read request
     REPLY_WR,           // home node replies to requestor for write request
     REPLY_ID,           // home node replies with IDs of sharers to requestor
@@ -39,9 +41,9 @@ typedef enum {
 } transactionType;
 
 // We will create our own address space which will be of size 1 byte
-// MSB 4 bits indicate the location in memory
-// LSB 4 bits indicate the processor it is present in.
-// For example, 0xF3 means the memory block at index 15 in the 3rd processor
+// LSB 4 bits indicate the location in memory
+// MSB 4 bits indicate the processor it is present in.
+// For example, 0x36 means the memory block at index 6 in the 3rd processor
 typedef struct instruction {
     byte type;      // 'R' for read, 'W' for write
     byte address;
@@ -116,13 +118,17 @@ int main( int argc, char * argv[] ) {
     {
         int threadId = omp_get_thread_num();
         initializeProcessor( threadId, &node );
+        // wait for all processors to complete initialization before proceeding
         #pragma omp barrier
 
         message msg;
         message msgReply;
+        instruction instr;
         int instructionIdx = -1;
-        int printProcState = 1;
-        byte waitingForReply = 0;
+        int printProcState = 1;         // control how many times to dump processor
+        byte waitingForReply = 0;       // if a processor is waiting for a reply
+                                        // then dont proceed to next instruction
+                                        // as current instruction has not finished
         while ( 1 ) {
             // Process all messages in message queue first
             while ( 
@@ -131,14 +137,13 @@ int main( int argc, char * argv[] ) {
             ) {
                 int head = messageBuffers[ threadId ].head;
                 msg = messageBuffers[ threadId ].queue[ head ];
-
                 messageBuffers[ threadId ].head = ( head + 1 ) % MSG_BUFFER_SIZE;
 
                 printf( "Processor %d msg from: %d, type: %d, address: 0x%02X\n",
                         threadId, msg.sender, msg.type, msg.address );
 
-                byte memBlockAddr = msg.address >> 4;
-                byte procNodeAddr = msg.address & ( ( 1 << NUM_PROCS ) - 1 );
+                byte procNodeAddr = msg.address >> 4;
+                byte memBlockAddr = msg.address & ( ( 1 << 4 ) - 1 );
                 byte cacheIndex = memBlockAddr % CACHE_SIZE;
 
                 switch ( msg.type ) {
@@ -199,15 +204,19 @@ int main( int argc, char * argv[] ) {
                         // this is used in the home node to update the bit vector
                         msgReply.secondReceiver = msg.secondReceiver;
                         msgReply.address = msg.address;
+                        msgReply.sender = threadId;
                         // send FLUSH to home node
                         sendMessage( msg.sender, msgReply );
                         // send FLUSH to requesting node
-                        sendMessage( msg.secondReceiver, msgReply );
+                        // if home node is requesting node, dont send again
+                        if ( msg.sender != msg.secondReceiver ) {
+                            sendMessage( msg.secondReceiver, msgReply );
+                        }
                         break;
 
                     case FLUSH:
                         // if home node, update directory and memory
-                        // else, load block into cache
+                        // if requesting node, load block into cache
                         if ( procNodeAddr == threadId ) {
                             node.directory[ memBlockAddr ].state = S;
                             // update the bit vector to include requesting node
@@ -216,7 +225,9 @@ int main( int argc, char * argv[] ) {
                             node.directory[ memBlockAddr ].bitVector |= 
                                 ( 1 << msg.secondReceiver );
                             node.memory[ memBlockAddr ] = msg.value;
-                        } else {
+                            waitingForReply--;
+                        }
+                        if ( msg.secondReceiver == threadId ) {
                             if ( node.cache[ cacheIndex ].address != 0xFF ) {
                                 // some other memory block was in the cache
                                 handleCacheReplacement( threadId,
@@ -225,8 +236,8 @@ int main( int argc, char * argv[] ) {
                             node.cache[ cacheIndex ].address = msg.address;
                             node.cache[ cacheIndex ].state = SHARED;
                             node.cache[ cacheIndex ].value = msg.value;
+                            waitingForReply--;
                         }
-                        waitingForReply--;
                         break;
 
                     case UPGRADE:
@@ -295,6 +306,7 @@ int main( int argc, char * argv[] ) {
                                 msgReply.type = REPLY_WR;
                                 msgReply.address = msg.address; 
                                 msgReply.value = msg.value;
+                                msgReply.sender = threadId;
                                 node.directory[ memBlockAddr ].state = EM;
                                 node.directory[ memBlockAddr ].bitVector =
                                     ( 1 << msg.sender );
@@ -367,15 +379,17 @@ int main( int argc, char * argv[] ) {
                         sendMessage( msg.sender, msgReply );
                         // send an ack to the requesting node which will become the
                         // new owner node
-                        msgReply.value = msg.value;
-                        sendMessage( msg.secondReceiver, msgReply );
+                        // if home node is the new owner node, dont send again
+                        if ( msg.secondReceiver != msg.sender ) {
+                            sendMessage( msg.secondReceiver, msgReply );
+                        }
                         // invalidate the cache line
                         node.cache[ cacheIndex ].state = INVALID;
                         break;
 
                     case FLUSH_INVACK:
                         // if home node, update directory and memory
-                        // else, load block into cache
+                        // if requesting node, load block into cache
                         if ( procNodeAddr == threadId ) {
                             node.directory[ memBlockAddr ].state = EM;
                             // update the bit vector to only have requesting node
@@ -383,7 +397,9 @@ int main( int argc, char * argv[] ) {
                             node.directory[ memBlockAddr ].bitVector = 
                                 ( 1 << msg.secondReceiver );
                             node.memory[ memBlockAddr ] = msg.value;
-                        } else {
+                            waitingForReply--;
+                        } 
+                        if ( msg.secondReceiver == threadId ) {
                             if ( node.cache[ cacheIndex ].address != 0xFF ) {
                                 // some other memory block was in the cache
                                 handleCacheReplacement( threadId,
@@ -391,9 +407,9 @@ int main( int argc, char * argv[] ) {
                             }
                             node.cache[ cacheIndex ].address = msg.address;
                             node.cache[ cacheIndex ].state = MODIFIED;
-                            node.cache[ cacheIndex ].value = msg.value;
+                            node.cache[ cacheIndex ].value = instr.value;
+                            waitingForReply--;
                         }
-                        waitingForReply--;
                         break;
                     
                     case EVICT_SHARED:
@@ -452,11 +468,11 @@ int main( int argc, char * argv[] ) {
                 // still need to react to new transaction messages
                 continue;
             }
-            instruction instr = node.instructions[ instructionIdx ];
+            instr = node.instructions[ instructionIdx ];
             printf( "Processor %d: instr type=%c, address=0x%02X, value=%hhu\n",
                     threadId, instr.type, instr.address, instr.value );
-            byte memBlockAddr = instr.address >> 4;
-            byte procNodeAddr = instr.address & ( ( 1 << NUM_PROCS ) - 1 );
+            byte procNodeAddr = instr.address >> 4;
+            byte memBlockAddr = instr.address & ( ( 1 << NUM_PROCS ) - 1 );
             byte cacheIndex = memBlockAddr % CACHE_SIZE;
 
           if ( instr.type == 'R' ) {
@@ -576,8 +592,8 @@ void handleCacheReplacement( int sender, cacheLine oldCacheLine ) {
     message msg;
     msg.sender = sender;
     msg.address = oldCacheLine.address;
-    byte memBlockAddr = msg.address >> 4;
-    byte procNodeAddr = msg.address & ( ( 1 << NUM_PROCS ) - 1 );
+    byte procNodeAddr = msg.address >> 4;
+    byte memBlockAddr = msg.address & ( ( 1 << NUM_PROCS ) - 1 );
     switch ( oldCacheLine.state ) {
         case SHARED:
             // update directory in home node

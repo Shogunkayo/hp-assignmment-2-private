@@ -48,7 +48,7 @@ Each directory entry contains:
 
 ## Instructions and Input Format
 
-You will be working with a custom memory address space, which will be of size 1 byte. MSB 4 bits indicate the processor on which the block is present, and LSB 4 bits indicate the memory index. For example, `0x17` refers to the 7th memory block in processor 1. This addressing scheme allows for a maximum of 16 processors, each with 16 memory locations, operating concurrently in the system.
+You will be working with a custom memory address space, which will be of size 1 byte. MSB 4 bits indicate the processor on which the block is present, and LSB 4 bits indicate the memory index. For example, `0x17` refers to the 7th memory block in processor 1. This addressing scheme allows for a maximum of 16 processors, each with 16 memory locations, operating concurrently in the system. Since `bitVector` is of size 1 byte, we further limit the maximum number of processors to 8. Address `0xFF` is considered invalid, meaning there is no memory block at that cacheline.
 
 The simulator will be fed input files with a name of the format `core_n.txt`, where `n` represents the core/node number. So `core_0.txt` will represent the input to core 0, for example. All core files will be in `tests/<test_directory>`. `n + 1` will be the total number of threads we support. Each of the files will be read by individual threads which will run the instructions.
 

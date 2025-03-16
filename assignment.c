@@ -3,7 +3,7 @@
 #include <omp.h>
 #include <stdlib.h>
 
-#define NUM_PROCS 2
+#define NUM_PROCS 4
 #define CACHE_SIZE 4
 #define MEM_SIZE 16
 #define MSG_BUFFER_SIZE 256
@@ -91,7 +91,7 @@ typedef struct processorNode {
     int instructionCount;
 } processorNode;
 
-void initializeProcessor( int threadId, processorNode *node );
+void initializeProcessor( int threadId, processorNode *node, char *dirName );
 void sendMessage( int receiver, message msg );
 void handleCacheReplacement( int sender, cacheLine oldCacheLine );
 void printProcessorState( int processorId, processorNode node );
@@ -100,8 +100,11 @@ messageBuffer messageBuffers[ NUM_PROCS ];
 omp_lock_t msgBufferLocks[ NUM_PROCS ];
 
 int main( int argc, char * argv[] ) {
-    ( void ) argc;
-    ( void ) argv;
+    if (argc < 2) {
+        fprintf( stderr, "Usage: %s <test_directory>\n", argv[0] );
+        return EXIT_FAILURE;
+    }
+    char *dirName = argv[1];
     
     omp_set_num_threads( NUM_PROCS );
 
@@ -114,10 +117,10 @@ int main( int argc, char * argv[] ) {
     processorNode node;
 
     #pragma omp parallel default( none ) private( node ) \
-                                         shared( messageBuffers, msgBufferLocks )
+                         shared( messageBuffers, msgBufferLocks, dirName )
     {
         int threadId = omp_get_thread_num();
-        initializeProcessor( threadId, &node );
+        initializeProcessor( threadId, &node, dirName );
         // wait for all processors to complete initialization before proceeding
         #pragma omp barrier
 
@@ -139,8 +142,10 @@ int main( int argc, char * argv[] ) {
                 msg = messageBuffers[ threadId ].queue[ head ];
                 messageBuffers[ threadId ].head = ( head + 1 ) % MSG_BUFFER_SIZE;
 
+                #ifdef DEBUG
                 printf( "Processor %d msg from: %d, type: %d, address: 0x%02X\n",
                         threadId, msg.sender, msg.type, msg.address );
+                #endif /* ifdef DEBUG */
 
                 byte procNodeAddr = msg.address >> 4;
                 byte memBlockAddr = msg.address & ( ( 1 << 4 ) - 1 );
@@ -469,8 +474,10 @@ int main( int argc, char * argv[] ) {
                 continue;
             }
             instr = node.instructions[ instructionIdx ];
+            #ifdef DEBUG
             printf( "Processor %d: instr type=%c, address=0x%02X, value=%hhu\n",
                     threadId, instr.type, instr.address, instr.value );
+            #endif
             byte procNodeAddr = instr.address >> 4;
             byte memBlockAddr = instr.address & ( ( 1 << NUM_PROCS ) - 1 );
             byte cacheIndex = memBlockAddr % CACHE_SIZE;
@@ -533,7 +540,7 @@ int main( int argc, char * argv[] ) {
     }
 }
 
-void initializeProcessor( int threadId, processorNode *node ) {
+void initializeProcessor( int threadId, processorNode *node, char *dirName ) {
     for ( int i = 0; i < MEM_SIZE; i++ ) {
         node->memory[ i ] = 20 * threadId + i;  // some initial value to mem block
         node->directory[ i ].bitVector = 0;     // no cache has this block at start
@@ -549,11 +556,11 @@ void initializeProcessor( int threadId, processorNode *node ) {
     }
 
     // read and parse instructions from core_<threadId>.txt
-    char filename[ 16 ];
-    snprintf( filename, sizeof( filename ), "core_%d.txt", threadId );
+    char filename[ 128 ];
+    snprintf(filename, sizeof(filename), "tests/%s/core_%d.txt", dirName, threadId);
     FILE *file = fopen( filename, "r" );
     if ( !file ) {
-        printf( "Error: count not open file %s\n", filename );
+        fprintf( stderr, "Error: count not open file %s\n", filename );
         exit( EXIT_FAILURE );
     }
 
@@ -576,7 +583,9 @@ void initializeProcessor( int threadId, processorNode *node ) {
     }
 
     fclose( file );
+    #ifdef DEBUG
     printf( "Processor %d initialized\n", threadId );
+    #endif /* ifdef DEBUG */
 }
 
 void sendMessage( int receiver, message msg ) {

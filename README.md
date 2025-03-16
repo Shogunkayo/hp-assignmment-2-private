@@ -30,6 +30,3 @@ RD 0x17
 The first instruction indicates that core 0 is trying to write the value 100 to memory location `0x15`. The second instruction indicates that core 0 is trying to read the value stored at memory location `0x17`. 
 
 Note that, while the memory is distributed across nodes, the memory regions combined act as a global shared memory space. Meaning, core 0 can read content from the memory region in node 2, for example. That being said, each node has its own local cache (which is why we need a cache coherence protocol here in the first place).
-
-## Output Format
-

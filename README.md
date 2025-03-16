@@ -4,6 +4,7 @@ In this assignment, you will be implementing a directory-based cache coherence p
 - Local cache   : direct-mapped, with `CACHE_SIZE` entries
 - Local memory
 - Directory     : maintains coherence state of memory blocks
+  
 Each processor also contains a message queue, which will be shared in this simulation, as you will not be building a separate interconnect model for message passing.Instead, the processors will be communicating through these message queues/buffers. In order to ensure cache coherence between these nodes, you will be implementing a cache coherence protocol.
 
 ## Coherence State
@@ -14,7 +15,7 @@ Each directory entry is associated with a memory line/block, and also has a stat
 - SHARED    :   cached in multiple processors, clean
 - INVALID   :   not present in cache / not a valid value
 
-and uses the following statesfor the directory entry:
+and uses the following states for the directory entry:
 - EM    : EXCLUSIVE or MODIFIED : present in one cache, can be clean or dirty
 - S     : SHARED    : present in multiple caches, clean
 - U     : UNOWNED   : not cached in any processor
@@ -48,8 +49,9 @@ Each directory entry contains:
 ## Instructions and Input Format
 
 You will be working with a custom memory address space, which will be of size 1 byte. MSB 4 bits indicate the processor on which the block is present, and LSB 4 bits indicate the memory index. For example, `0x17` refers to the 7th memory block in processor 1. This addressing scheme allows for a maximum of 16 processors, each with 16 memory locations, operating concurrently in the system.
-The simulator will be fed input files with a name of the format `core_n.txt`, where `n` represents the core/node number. So `core_0.txt` will represent the input to core 0, for example. All core files will be in `tests/<test_directory>`.
-`n + 1` will be the total number of threads we support. Each of the files will be read by individual threads which will run the instructions.
+
+The simulator will be fed input files with a name of the format `core_n.txt`, where `n` represents the core/node number. So `core_0.txt` will represent the input to core 0, for example. All core files will be in `tests/<test_directory>`. `n + 1` will be the total number of threads we support. Each of the files will be read by individual threads which will run the instructions.
+
 You will be dealing with two types of instructions: `RD <address>` and `WR <address> <value>`
 
 Consider the following example,
@@ -67,9 +69,9 @@ Note that, while the memory is distributed across nodes, the memory regions comb
 
 ## Output
 
-You will have to use `printProcessorState` function to dump the contents of the processor, after it has processed all the instructions. IMPORTANT: DO NOT MODIFY THE FUNCTION, EVALUATION WILL BE BASED OFF OF THIS OUTPUT. Note that you can use `printProcState` to dump multiple times, ensuring that instructions and message handlingof all processors in complete. Evaluation will be done in a transparent manner, and any loss of marks will be explained.
+You will have to use `printProcessorState` function to dump the contents of the processor, after it has processed all the instructions. **IMPORTANT: DO NOT MODIFY THE FUNCTION, EVALUATION WILL BE BASED OFF OF THIS OUTPUT.** Note that you can use `printProcState` to dump multiple times, ensuring that instructions and message handlingof all processors in complete. Evaluation will be done in a transparent manner, and any loss of marks will be explained.
 
-IMPORTANT: Please wrap all debug statements withing `#ifdef DEBUG` and `#endif`. Example:
+**IMPORTANT: Please wrap all debug statements within `#ifdef DEBUG` and `#endif`.** Example:
 ```
 #ifdef DEBUG
 printf( "Processor %d msg from: %d, type: %d, address: 0x%02X\n",

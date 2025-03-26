@@ -80,7 +80,7 @@ typedef struct messageBuffer {
     // a circular queue message buffer
     int head;
     int tail;
-    int count;
+    int count;          // store total number of messages processed by node
 } messageBuffer;
 
 typedef struct processorNode {
@@ -116,7 +116,7 @@ int main( int argc, char * argv[] ) {
         messageBuffers[ i ].head = 0;
         messageBuffers[ i ].tail = 0;
         // IMPLEMENT
-        // initialize the locks in msgBufferLocks
+        // initialize the locks in msgBufferLocks array
     }
     processorNode node;
 

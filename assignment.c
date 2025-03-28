@@ -25,19 +25,19 @@ typedef enum { MODIFIED, EXCLUSIVE, SHARED, INVALID } cacheLineState;
 typedef enum { EM, S, U } directoryEntryState;
 
 typedef enum { 
-    READ_REQUEST,       // requesting node sends to home node on a read miss            done
-    WRITE_REQUEST,      // requesting node sends to home node on a write miss           done
-    REPLY_RD,           // home node replies with data to requestor for read request    done
-    REPLY_WR,           // home node replies to requestor for write request             done    
-    REPLY_ID,           // home node replies with IDs of sharers to requestor           done
-    INV,                // owner node asks sharers to invalidate                        done
-    UPGRADE,            // owner node asks home node to change state to EM              done
-    WRITEBACK_INV,      // home node asks owner node to flush and change to INVALID     done
-    WRITEBACK_INT,      // home node asks owner node to flush and change to SHARED      done
-    FLUSH,              // owner flushes data to home + requestor                       done
-    FLUSH_INVACK,       // flush, piggybacking an InvAck message                        done
-    EVICT_SHARED,       // handle cache replacement of a shared cache line
-    EVICT_MODIFIED      // handle cache replacement of a modified cache line            done
+    READ_REQUEST,       // 0  requesting node sends to home node on a read miss
+    WRITE_REQUEST,      // 1  requesting node sends to home node on a write miss
+    REPLY_RD,           // 2  home node replies with data to requestor read request
+    REPLY_WR,           // 3  home node replies to requestor for write request
+    REPLY_ID,           // 4  home node replies with IDs of sharers to requestor
+    INV,                // 5  owner node asks sharers to invalidate
+    UPGRADE,            // 6  owner node asks home node to change state to EM
+    WRITEBACK_INV,      // 7  home node asks owner node to flush & change to INVALID
+    WRITEBACK_INT,      // 8  home node asks owner node to flush & change to SHARED
+    FLUSH,              // 9  owner flushes data to home + requestor
+    FLUSH_INVACK,       // 10 flush, piggybacking an InvAck message
+    EVICT_SHARED,       // 11 handle cache replacement of a shared cache line
+    EVICT_MODIFIED      // 12 handle cache replacement of a modified cache line
 } transactionType;
 
 // We will create our own address space which will be of size 1 byte
@@ -142,14 +142,14 @@ int main( int argc, char * argv[] ) {
                 msg = messageBuffers[ threadId ].queue[ head ];
                 messageBuffers[ threadId ].head = ( head + 1 ) % MSG_BUFFER_SIZE;
 
+                byte procNodeAddr = msg.address >> 4;
+                byte memBlockAddr = msg.address & ( ( 1 << 4 ) - 1 );
+                byte cacheIndex = memBlockAddr % CACHE_SIZE;
+
                 #ifdef DEBUG
                 printf( "Processor %d msg from: %d, type: %d, address: 0x%02X\n",
                         threadId, msg.sender, msg.type, msg.address );
                 #endif /* ifdef DEBUG */
-
-                byte procNodeAddr = msg.address >> 4;
-                byte memBlockAddr = msg.address & ( ( 1 << 4 ) - 1 );
-                byte cacheIndex = memBlockAddr % CACHE_SIZE;
 
                 switch ( msg.type ) {
                     case READ_REQUEST:
@@ -357,7 +357,7 @@ int main( int argc, char * argv[] ) {
                                 int receiver = __builtin_ctz(
                                     node.directory[ memBlockAddr ].bitVector );
                                 sendMessage( receiver, msgReply );
-                                waitingForReply--;
+                                waitingForReply++;
                                 break;
                         }
                         break;
@@ -464,6 +464,9 @@ int main( int argc, char * argv[] ) {
             // if yes, then we have to complete the previous instruction before
             // moving on to the next
             if ( waitingForReply > 0 ) {
+                #ifdef DEBUG
+                printf( "ThreadId %d : waiting %d\n", threadId, waitingForReply );
+                #endif
                 continue;
             }
             // Process an instruction
@@ -506,6 +509,7 @@ int main( int argc, char * argv[] ) {
                 // write hit on an invalid cache line is treated as write miss
                 if ( node.cache[ cacheIndex ].address == instr.address &&
                      node.cache[ cacheIndex ].state != INVALID ) {
+
                     // handle write hits
                     switch ( node.cache[ cacheIndex ].state ) {
                         case MODIFIED:
@@ -639,29 +643,29 @@ void printProcessorState(int processorId, processorNode node) {
     printf("=======================================\n\n");
 
     // Print memory state
-    printf("-------- Memory State -------\n");
-    printf("| Index | Address | Value   |\n");
-    printf("|---------------------------|\n");
+    printf("-------- Memory State --------\n");
+    printf("| Index | Address |   Value  |\n");
+    printf("|----------------------------|\n");
     for (int i = 0; i < MEM_SIZE; i++) {
-        printf("|  %3d  |  0x%02X   |  %5d  |\n", i, ( processorId << 4 ) + i,
+        printf("|  %3d  |  0x%02X   |  %5d   |\n", i, ( processorId << 4 ) + i,
                 node.memory[i]);
     }
-    printf("-----------------------------\n\n");
+    printf("------------------------------\n\n");
 
     // Print directory state
-    printf("------------ Directory State --------------\n");
-    printf("| Index | Address | State | BitVector     |\n");
-    printf("|-----------------------------------------|\n");
+    printf("------------ Directory State ---------------\n");
+    printf("| Index | Address | State |    BitVector   |\n");
+    printf("|------------------------------------------|\n");
     for (int i = 0; i < MEM_SIZE; i++) {
-        printf("|  %3d  |  0x%02X   |  %2s  |   0x%08B   |\n", i,
+        printf("|  %3d  |  0x%02X   |  %2s   |   0x%08B   |\n", i,
                 ( processorId << 4 ) + i, dirStateStr[node.directory[i].state],
                 node.directory[i].bitVector);
     }
-    printf("-------------------------------------------\n\n");
+    printf("--------------------------------------------\n\n");
     
     // Print cache state
     printf("------------ Cache State ----------------\n");
-    printf("| Index | Address | Value |  State      |\n");
+    printf("| Index | Address | Value |    State    |\n");
     printf("|---------------------------------------|\n");
     for (int i = 0; i < CACHE_SIZE; i++) {
         printf("|  %3d  |  0x%02X   |  %3d  |  %8s \t|\n", 

@@ -1,102 +1,28 @@
-Processor 0 initialized
-Processor 2 initialized
-Processor 1 initialized
-Processor 3 initialized
 Processor 3: instr type=R, address=0x3C, value=0
-Processor 3 msg from: 3, type: 0, address: 0x3C
-Processor 3 msg from: 3, type: 2, address: 0x3C
 Processor 0: instr type=W, address=0x00, value=190
-Processor 0 msg from: 0, type: 1, address: 0x00
-Processor 0 msg from: 0, type: 3, address: 0x00
 Processor 0: instr type=W, address=0x22, value=200
 Processor 1: instr type=W, address=0x0F, value=120
 Processor 3: instr type=W, address=0x00, value=110
-Processor 0 msg from: 1, type: 1, address: 0x0F
-Processor 0 msg from: 3, type: 1, address: 0x00
 Processor 2: instr type=R, address=0x11, value=0
-Processor 2 msg from: 0, type: 1, address: 0x22
-Processor 0 msg from: 0, type: 7, address: 0x00
-Processor 0 msg from: 2, type: 3, address: 0x22
-Processor 0 msg from: 0, type: 10, address: 0x00
 Processor 0: instr type=W, address=0x11, value=100
-Processor 1 msg from: 0, type: 3, address: 0x0F
-Processor 1 msg from: 2, type: 0, address: 0x11
-Processor 1 msg from: 0, type: 1, address: 0x11
-Processor 3 msg from: 0, type: 10, address: 0x00
-Processor 3 msg from: 3, type: 11, address: 0x3C
 Processor 3: instr type=R, address=0x30, value=0
-Processor 3 msg from: 3, type: 0, address: 0x30
-Processor 3 msg from: 3, type: 2, address: 0x30
 Processor 3: instr type=R, address=0x00, value=0
-Processor 0 msg from: 3, type: 12, address: 0x00
-Processor 0 msg from: 3, type: 0, address: 0x00
-Processor 2 msg from: 1, type: 2, address: 0x11
-Processor 2 msg from: 1, type: 7, address: 0x11
 Processor 2: instr type=W, address=0x2A, value=130
-Processor 2 msg from: 2, type: 1, address: 0x2A
-Processor 2 msg from: 2, type: 3, address: 0x2A
 Processor 2: instr type=W, address=0x2A, value=140
 Processor 2: instr type=R, address=0x2A, value=0
 Processor 2: instr type=R, address=0x20, value=0
-Processor 2 msg from: 2, type: 0, address: 0x20
-Processor 2 msg from: 2, type: 2, address: 0x20
 Processor 2: instr type=W, address=0x3A, value=230
-Processor 3 msg from: 0, type: 2, address: 0x00
-Processor 3 msg from: 2, type: 1, address: 0x3A
-Processor 2 msg from: 3, type: 3, address: 0x3A
-Processor 2 msg from: 2, type: 12, address: 0x2A
-Processor 3 msg from: 3, type: 11, address: 0x30
 Processor 3: instr type=R, address=0x30, value=0
-Processor 3 msg from: 3, type: 0, address: 0x30
-Processor 3 msg from: 3, type: 2, address: 0x30
 Processor 3: instr type=R, address=0x00, value=0
-Processor 0 msg from: 2, type: 10, address: 0x11
-Processor 0 msg from: 3, type: 11, address: 0x00
-Processor 0 msg from: 3, type: 0, address: 0x00
-Processor 1 msg from: 2, type: 10, address: 0x11
 Processor 1: instr type=R, address=0x38, value=0
-Processor 3 msg from: 0, type: 2, address: 0x00
-Processor 3 msg from: 1, type: 0, address: 0x38
-Processor 3 msg from: 3, type: 11, address: 0x30
 Processor 3: instr type=R, address=0x30, value=0
-Processor 3 msg from: 3, type: 0, address: 0x30
-Processor 3 msg from: 3, type: 2, address: 0x30
 Processor 3: instr type=R, address=0x00, value=0
-Processor 1 msg from: 3, type: 2, address: 0x38
 Processor 1: instr type=W, address=0x38, value=166
 Processor 1: instr type=R, address=0x12, value=0
-Processor 1 msg from: 1, type: 0, address: 0x12
-Processor 1 msg from: 1, type: 2, address: 0x12
 Processor 1: instr type=R, address=0x20, value=0
-Processor 0 msg from: 3, type: 11, address: 0x00
-Processor 0 msg from: 3, type: 0, address: 0x00
-Processor 3 msg from: 0, type: 2, address: 0x00
-Processor 3 msg from: 3, type: 11, address: 0x30
 Processor 3: instr type=R, address=0x30, value=0
-Processor 3 msg from: 3, type: 0, address: 0x30
-Processor 3 msg from: 3, type: 2, address: 0x30
 Processor 3: instr type=W, address=0x30, value=240
 Processor 3: instr type=R, address=0x00, value=0
-Processor 2 msg from: 1, type: 0, address: 0x20
-Processor 2 msg from: 2, type: 8, address: 0x20
-Processor 2 msg from: 2, type: 9, address: 0x20
-Processor 1 msg from: 2, type: 9, address: 0x20
-Processor 0 msg from: 3, type: 11, address: 0x00
-Processor 0 msg from: 3, type: 0, address: 0x00
-Processor 3 msg from: 1, type: 12, address: 0x38
-Processor 3 msg from: 0, type: 2, address: 0x00
-Processor 3 msg from: 3, type: 12, address: 0x30
 Processor 3: instr type=W, address=0x30, value=230
-Processor 3 msg from: 3, type: 1, address: 0x30
-Processor 3 msg from: 3, type: 3, address: 0x30
 Processor 3: instr type=R, address=0x20, value=0
-Processor 2 msg from: 3, type: 0, address: 0x20
-Processor 3 msg from: 2, type: 2, address: 0x20
-Processor 3 msg from: 3, type: 12, address: 0x30
 Processor 3: instr type=W, address=0x20, value=99
-Processor 2 msg from: 3, type: 6, address: 0x20
-Processor 3 msg from: 2, type: 4, address: 0x20
-Processor 1 msg from: 3, type: 5, address: 0x20
-Processor 2 msg from: 3, type: 5, address: 0x20
-Processor 2 msg from: 3, type: 11, address: 0x20
-Processor 0 msg from: 3, type: 11, address: 0x00

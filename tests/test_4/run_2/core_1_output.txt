@@ -47,7 +47,7 @@
 ------------ Cache State ----------------
 | Index | Address | Value |    State    |
 |---------------------------------------|
-|    0  |  0x20   |   40  |  EXCLUSIVE 	|
+|    0  |  0x20   |   40  |   INVALID 	|
 |    1  |  0xFF   |    0  |   INVALID 	|
 |    2  |  0x12   |   22  |  EXCLUSIVE 	|
 |    3  |  0x0F   |  120  |  MODIFIED 	|

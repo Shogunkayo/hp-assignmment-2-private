@@ -286,11 +286,6 @@ int main( int argc, char * argv[] ) {
                         // AFTER we receive INVACK from every sharer, but for that
                         // we will have to keep track of all the INVACKS.
                         // Instead, we will assume that INV does not fail.
-                        if ( node.cache[ cacheIndex ].address != 0xFF ) {
-                            // some other memory block was in the cache
-                            handleCacheReplacement( threadId,
-                                                    node.cache[ cacheIndex ] );
-                        }
                         node.cache[ cacheIndex ].state = MODIFIED;
                         node.cache[ cacheIndex ].value = msg.value;
                         node.cache[ cacheIndex ].address = msg.address;

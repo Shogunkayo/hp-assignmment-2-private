@@ -1,0 +1,45 @@
+Processor 1 initialized
+Processor 0 initialized
+Processor 3 initialized
+Processor 2 initialized
+Processor 2: instr type=R, address=0x22, value=0
+Processor 2 msg from: 2, type: 0, address: 0x22
+Processor 2 msg from: 2, type: 2, address: 0x22
+Processor 1: instr type=R, address=0x05, value=0
+Processor 0: instr type=R, address=0x33, value=0
+Processor 0 msg from: 1, type: 0, address: 0x05
+Processor 1 msg from: 0, type: 2, address: 0x05
+Processor 1: instr type=W, address=0x05, value=200
+Processor 1: instr type=R, address=0x1A, value=0
+Processor 1 msg from: 1, type: 0, address: 0x1A
+Processor 1 msg from: 1, type: 2, address: 0x1A
+Processor 2: instr type=W, address=0x22, value=100
+Processor 2: instr type=, address=0x00, value=0
+Processor 0 msg from: 2, type: 1, address: 0x00
+Processor 2 msg from: 0, type: 3, address: 0x00
+Processor 2: instr type=, address=0x00, value=0
+Processor 3: instr type=R, address=0x1A, value=0
+Processor 3 msg from: 0, type: 0, address: 0x33
+Processor 1 msg from: 3, type: 0, address: 0x1A
+Processor 1 msg from: 1, type: 8, address: 0x1A
+Processor 1 msg from: 1, type: 9, address: 0x1A
+Processor 3 msg from: 1, type: 9, address: 0x1A
+Processor 3: instr type=W, address=0x1A, value=50
+Processor 1 msg from: 3, type: 6, address: 0x1A
+Processor 3 msg from: 1, type: 4, address: 0x1A
+Processor 3: instr type=R, address=0x33, value=0
+Processor 3 msg from: 3, type: 0, address: 0x33
+Processor 1 msg from: 3, type: 5, address: 0x1A
+Processor 1 msg from: 3, type: 11, address: 0x1A
+Processor 0 msg from: 3, type: 2, address: 0x33
+Processor 0 msg from: 3, type: 8, address: 0x33
+Processor 0: instr type=W, address=0x33, value=150
+Processor 3 msg from: 0, type: 9, address: 0x33
+Processor 3 msg from: 0, type: 6, address: 0x33
+Processor 0 msg from: 3, type: 4, address: 0x33
+Processor 0: instr type=R, address=0x05, value=0
+Processor 0 msg from: 0, type: 0, address: 0x05
+Processor 3 msg from: 0, type: 5, address: 0x33
+Processor 3 msg from: 0, type: 11, address: 0x33
+Processor 1 msg from: 0, type: 8, address: 0x05
+Processor 0 msg from: 1, type: 9, address: 0x05
